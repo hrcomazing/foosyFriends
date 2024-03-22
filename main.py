@@ -1,4 +1,4 @@
-import ArduinoCOM
+from ArduinoCOM import ArduinoCOM
 
 if __name__ == "__main__":
     try:
