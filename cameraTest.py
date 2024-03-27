@@ -3,7 +3,7 @@ import numpy as np
 from AntiFisheye import AntiFisheye
 
 # Create a VideoCapture object
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 K = np.array([[1.30327767e+03, 0.00000000e+00, 7.04960207e+02], [0.00000000e+00, 1.30488170e+03, 5.03778850e+02], [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])  # Example camera matrix
 D = np.array([-0.01093008, -0.23537576, 0.6907555, -0.48150618])  # Example distortion coefficients
 
