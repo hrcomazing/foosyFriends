@@ -25,7 +25,7 @@ class ArduinoCOM:
     def save_json_response(self, response):
         """Saves the Arduino's JSON response to a file."""
         data = json.loads(response)
-        with open("arduino_response.json", "w") as file:
+        with open("../arduino_response.json", "w") as file:
             json.dump(data, file, indent=4)
             print("Response saved to arduino_response.json")
 
