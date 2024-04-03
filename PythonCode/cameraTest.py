@@ -1,19 +1,20 @@
 import cv2
 import numpy as np
+import imutils
 from AntiFisheye import AntiFisheye
 
 # Create a VideoCapture object
 cap = cv2.VideoCapture(1)
 K = np.array([[1.30327767e+03, 0.00000000e+00, 7.04960207e+02], [0.00000000e+00, 1.30488170e+03, 5.03778850e+02], [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])  # Example camera matrix
 D = np.array([-0.01093008, -0.23537576, 0.6907555, -0.48150618])  # Example distortion coefficients
-
+orangeLower = (55, 170, 180)
+orangeUpper = (110, 230, 255)
 # Check if camera opened successfully
 if not cap.isOpened():
     print("Error: Could not open video capture device.")
     exit()
 
 # Set the resolution of the video capture. Example: 1920x1080
-print('got here')
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
@@ -28,6 +29,27 @@ while True:
     # Display the resulting frame
 
     frame = AntiFisheye.undistort_fisheye_image(frame, K, D)
+    blurred = cv2.GaussianBlur(frame, (11, 11), 0)
+
+    mask = cv2.inRange(blurred, orangeLower, orangeUpper)
+    mask = cv2.erode(mask, None, iterations=2)
+    mask = cv2.dilate(mask, None, iterations=2)
+
+    cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+
+    center = None
+    
+    if len(cnts) > 0:
+        c = max(cnts, key=cv2.contourArea)
+        ((x, y), radius) = cv2.minEnclosingCircle(c)
+        print(x, ",", y)
+        M = cv2.moments(c)
+        #center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+
+        if radius > 10:
+            cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
+            
     cv2.imshow('Frame', frame)
 
     # Break the loop when 'q' is pressed
