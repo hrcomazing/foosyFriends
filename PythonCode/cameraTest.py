@@ -29,7 +29,7 @@ while True:
 
     # Display the resulting frame
 
-    #frame = AntiFisheye.undistort_fisheye_image(frame, K, D)
+    frame = AntiFisheye.undistort_fisheye_image(frame, K, D)
     blurred = cv2.GaussianBlur(frame, (11, 11), 0)
 
     mask = cv2.inRange(blurred, orangeLower, orangeUpper)
