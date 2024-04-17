@@ -6,11 +6,13 @@
 class StepperControl {
   public:
     StepperControl(int stepPin, int dirPin, int stepsPerRevolution);
-    void moveTo(int position, float speed);
+    void moveTo(float position, float speed);
     void runAtSpeed(float speed, int direction); // Direction determines continuous run direction
     void stop(); // Stops any movement, effectively putting the motor in idle state
     void setIdle(); // Explicitly sets the motor to idle mode
     void update();
+    void setLowLim(int lim);
+    void setHighLim(int lim);
     int getCurrentPosition();
 
   private:
@@ -20,6 +22,8 @@ class StepperControl {
     int _stepPin, _dirPin;
     int _stepsPerRevolution;
     int _currentPosition, _targetPosition;
+    int _lowLim;
+    int _highLim;
     unsigned long _lastStepTime;
     float _stepDelay;
     int _runDirection; // Added to control the direction in RUNNING state

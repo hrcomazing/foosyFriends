@@ -9,12 +9,22 @@ StepperControl::StepperControl(int stepPin, int dirPin, int stepsPerRevolution) 
     _currentPosition = 0;
     _targetPosition = 0;
     _lastStepTime = 0;
+    _highLim = 0;
+    _lowLim = 0;
     _state = IDLE; // Motor starts in an idle state
     _runDirection = 1; // Default direction
 }
 
-void StepperControl::moveTo(int position, float speed) {
-    _targetPosition = position;
+void StepperControl::setLowLim(int lim){
+    _lowLim = lim;
+}
+
+void StepperControl::setHighLim(int lim){
+    _highLim = lim;
+}
+
+void StepperControl::moveTo(float position, float speed) {
+    _targetPosition = (int)(_lowLim + position*(_highLim - _lowLim));
     _stepDelay = 2000 * (1 - speed);
     _state = MOVING;
 }
