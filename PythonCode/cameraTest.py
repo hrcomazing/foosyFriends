@@ -49,6 +49,7 @@ while True:
         # Calculate the circularity
         area = cv2.contourArea(c)
         perimeter = cv2.arcLength(c, True)
+       
         circularity = 4 * math.pi * area / (perimeter ** 2)
 
         # Check if the circularity is within your desired range, for example, > 0.8

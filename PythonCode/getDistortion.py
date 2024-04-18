@@ -4,7 +4,7 @@ import glob
 
 # Define the chessboard size and squares' size
 chessboard_size = (7, 7)  # Adjust to your chessboard's number of inner corners (width-1, height-1)
-square_size = 19.6  # The actual size of the squares on your chessboard (in meters or any consistent unit)
+square_size = 19.6/1000  # The actual size of the squares on your chessboard (in meters or any consistent unit)
 
 # Prepare object points
 objp = np.zeros((chessboard_size[0] * chessboard_size[1], 3), np.float32)
