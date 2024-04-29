@@ -29,6 +29,42 @@ URCorner = (1064, 135) # Upper Right (1061, 136)
 BLCorner = (197, 617)  # Bottom Left (200, 626)
 BRCorner = (1064, 617) # Bottom Right (1066, 609)
 
+# helper methods
+# Convert player area positions from inches to pixels
+def convert_to_pixels(player_areas, ppi):
+    return [(start * ppi + URCorner[1], end * ppi + URCorner[1]) for start, end in player_areas]
+
+
+# Convert rod x-asymptotes from inches to pixels
+def convert_rod_asymptotes(rod_asymptotes, ppi):
+    return [x * ppi + ULCorner[0] for x in rod_asymptotes]
+
+
+def normalize_y_position(y, top_pixel = URCorner[1], bottom_pixel = BRCorner[1]):
+
+    if y < top_pixel:
+        return 0
+    elif y > bottom_pixel:
+        return 1
+    else:
+        return (y - top_pixel) / (bottom_pixel - top_pixel)
+
+
+# Function to predict the final position of the ball based on current and previous positions
+def predict_final_position(x1, y1, x2, y2, time_diff):
+    vx = (x2 - x1) / time_diff if time_diff > 0 else 0
+    vy = (y2 - y1) / time_diff if time_diff > 0 else 0
+    x_final = np.array(rod_x_asymptote_pixels)
+
+    if vx != 0:
+        y_final = y2 + vy * (x_final - x2) / vx
+    else:
+        # Create an array of y2 repeated for the length of x_final
+        y_final = np.full_like(x_final, y2)
+
+    return x_final, y_final, vx, vy
+
+
 # Calculate pixel-per-inch ratio
 width_pixels = URCorner[0] - ULCorner[0]  # stupid axis
 length_pixels = BRCorner[1] - URCorner[1]  # axis players move on
@@ -140,7 +176,7 @@ while True:
     # send and receive coordinates via serial
     try:
         # Sending desired positions to the Arduino
-        arduino.send_positions(motoDesired, servoDesired)
+        arduino.send_positions(motorDesired, servoDesired)
 
         # Receiving and printing current positions from the Arduino
         current_positions = arduino.receive_positions()
@@ -160,37 +196,3 @@ cap.release()
 cv2.destroyAllWindows()
 
 
-# helper methods
-# Convert player area positions from inches to pixels
-def convert_to_pixels(player_areas, ppi):
-    return [(start * ppi + URCorner[1], end * ppi + URCorner[1]) for start, end in player_areas]
-
-
-# Convert rod x-asymptotes from inches to pixels
-def convert_rod_asymptotes(rod_asymptotes, ppi):
-    return [x * ppi + ULCorner[0] for x in rod_asymptotes]
-
-
-def normalize_y_position(y, top_pixel = URCorner[1], bottom_pixel = BRCorner[1]):
-
-    if y < top_pixel:
-        return 0
-    elif y > bottom_pixel:
-        return 1
-    else:
-        return (y - top_pixel) / (bottom_pixel - top_pixel)
-
-
-# Function to predict the final position of the ball based on current and previous positions
-def predict_final_position(x1, y1, x2, y2, time_diff):
-    vx = (x2 - x1) / time_diff if time_diff > 0 else 0
-    vy = (y2 - y1) / time_diff if time_diff > 0 else 0
-    x_final = np.array(rod_x_asymptote_pixels)
-
-    if vx != 0:
-        y_final = y2 + vy * (x_final - x2) / vx
-    else:
-        # Create an array of y2 repeated for the length of x_final
-        y_final = np.full_like(x_final, y2)
-
-    return x_final, y_final, vx, vy

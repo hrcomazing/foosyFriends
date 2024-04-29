@@ -21,10 +21,10 @@ class ArduinoCOM:
         self.ser.write((command + "\n").encode())  # Send the command
         print(f"Sent to Arduino: {command}")
         time.sleep(0.1)  # Give Arduino time to respond
-        if self.ser.inWaiting() > 0:
+        '''if self.ser.inWaiting() > 0:
             response = self.ser.readline().decode().rstrip()  # Read the response
             print(f"Received from Arduino: {response}")
-            self.save_json_response(response)
+            self.save_json_response(response)'''
 
     def receive_positions(self):
         """Receives and updates current positions from the Arduino."""
@@ -53,7 +53,7 @@ class ArduinoCOM:
         print("Serial connection closed.")
 
 
-def main():
+'''def main():
     # Create an instance of ArduinoCOM with the correct COM port
     arduino = ArduinoCOM(port='COM3')  # Replace 'COM3' with your actual COM port
     motor_positions_desired = [.5, .5, .5, .5]  # Example motor positions
@@ -78,7 +78,7 @@ def main():
     finally:
         # Ensure the serial connection is closed properly
         arduino.close()
-
+'''
 '''if __name__ == '__main__':
     main()'''
 
