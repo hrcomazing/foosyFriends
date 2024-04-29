@@ -23,22 +23,23 @@ def track_colored_object():
     fgbg = cv2.createBackgroundSubtractorMOG2(detectShadows=True)
     x, y = 0, 0
 
+    # Define range of orange color in HSV
+    lower_orange = np.array([0, 100, 100])
+    upper_orange = np.array([100, 255, 255])
+
     while True:
         # Capture frame-by-frame
         ret, frame = cap.read()
         if not ret:
             break
-
+            
+        frame = imutils.resize(frame, width=1200)
         # Apply the background subtractor to get the foreground mask
         frame = AntiFisheye.undistort_fisheye_image(frame, K, D)
         fgmask = fgbg.apply(frame)
 
         # Convert the frame to HSV color space
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-        # Define range of orange color in HSV
-        lower_orange = np.array([0, 100,100])
-        upper_orange = np.array([100, 255, 255])
 
         # Threshold the HSV image to get only orange colors
         mask = cv2.inRange(hsv, lower_orange, upper_orange)

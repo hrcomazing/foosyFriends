@@ -1,5 +1,23 @@
 #include <Servo.h>
 #include "StepperControl.h"
+#include "MotorServoController.h"
+#include <ArduinoJson.h>
+#include <string.h>  // For memcpy
+
+//Set up Serialization
+MotorServoController coms;
+
+// Constants for the number of motors and servos
+static const int numMotors = 4;
+static const int numServos = 4;
+
+// Arrays to store the positions of motors and servos
+int motorDesired[numMotors];
+int servoDesired[numServos];
+
+// Arrays to simulate current positions of motors and servos
+int motorCurrent[numMotors];
+int servoCurrent[numServos];
 
 // Motor 4 pin definitions
 const int stepPin1 = 2;
@@ -28,13 +46,16 @@ const int limitSwitchHigh4 = A1;
 const int stepsPerRevolution = 200; // Common for all motors, adjust if needed
 
 // Initialize the stepper control objects for each motor
-StepperControl stepper1(stepPin1, dirPin1, stepsPerRevolution);
-StepperControl stepper2(stepPin2, dirPin2, stepsPerRevolution);
-StepperControl stepper3(stepPin3, dirPin3, stepsPerRevolution);
-StepperControl stepper4(stepPin4, dirPin4, stepsPerRevolution);
+StepperControl stepper4(stepPin1, dirPin1, stepsPerRevolution);
+StepperControl stepper3(stepPin2, dirPin2, stepsPerRevolution);
+StepperControl stepper2(stepPin3, dirPin3, stepsPerRevolution);
+StepperControl stepper1(stepPin4, dirPin4, stepsPerRevolution);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
+  while (!Serial); // Wait for serial port to connect. Needed for native USB.
+  Serial.println("Ready");
+
   pinMode(limitSwitchLow1, INPUT_PULLUP);
   pinMode(limitSwitchHigh1, INPUT_PULLUP);
   pinMode(limitSwitchLow2, INPUT_PULLUP);
@@ -44,23 +65,51 @@ void setup() {
   pinMode(limitSwitchLow4, INPUT_PULLUP);
   pinMode(limitSwitchHigh4, INPUT_PULLUP);
   
-  findLimits(stepper1, limitSwitchLow1, limitSwitchHigh1);
-  findLimits(stepper2, limitSwitchLow2, limitSwitchHigh2);
-  findLimits(stepper3, limitSwitchLow3, limitSwitchHigh3);
-  findLimits(stepper4, limitSwitchLow4, limitSwitchHigh4);
+  findLimits(stepper1, limitSwitchLow4, limitSwitchHigh4);
+  findLimits(stepper2, limitSwitchLow3, limitSwitchHigh3);
+  findLimits(stepper3, limitSwitchLow2, limitSwitchHigh2);
+  findLimits(stepper4, limitSwitchLow1, limitSwitchHigh1);
+
 }
 
 void loop() {
   // The loop function can include logic to control each motor based on commands
   // received from the Serial Monitor or another input method.
-  stepper1.moveTo(.7, .3);
-  stepper2.moveTo(.7, .3);
-  stepper3.moveTo(.7, .3);
-  stepper4.moveTo(.7, .3);
+
+  if (Serial.available() > 0) {
+    // Read incoming serial data (aka parse desired motor/ servo values)
+    String jsonData = Serial.readStringUntil('\n');
+    coms.parseJson(jsonData);
+    //copy desired values into local array
+    memcpy(motorDesired, coms.motorAnglesDesired, sizeof(coms.motorAnglesDesired));
+    memcpy(servoDesired, coms.servoAnglesDesired, sizeof(coms.servoAnglesDesired));
+
+
+    //update current servo and motor values
+    motorCurrent[0] = stepper1.getCurrentPosNorm();
+    motorCurrent[1] = stepper2.getCurrentPosNorm();
+    motorCurrent[2] = stepper3.getCurrentPosNorm();
+    motorCurrent[3] = stepper4.getCurrentPosNorm();
+    servoCurrent[0] = 1;
+    servoCurrent[1] = 1;
+    servoCurrent[2] = 1;
+    servoCurrent[3] = 1;
+
+    // Send back the data
+    coms.sendJsonResponse(servoCurrent, motorCurrent);
+
+  }
+
+  //use the updated desired vals and move motor there
+  stepper1.moveTo(motorDesired[0], .3);
+  stepper2.moveTo(motorDesired[1], .3);
+  stepper3.moveTo(motorDesired[2], .3);
+  stepper4.moveTo(motorDesired[3], .3);
   stepper1.update();
   stepper2.update();
   stepper3.update();
   stepper4.update();
+
 }
 
 void findLimits(StepperControl &stepper, int lowSwitch, int highSwitch) {
@@ -83,45 +132,4 @@ void findLimits(StepperControl &stepper, int lowSwitch, int highSwitch) {
   stepper.setHighLim(stepper.getCurrentPosition());
 
   Serial.println("Limits set.");
-  //Serial.print("Low limit: ");
-  //Serial.println(stepper._lowLim);
-  //Serial.print("High limit: ");
-  //Serial.println(stepper._highLim);
 }
-/*
-Servo servo;  // Create a servo object
-int servoPin = 10;  // Servo is connected to digital pin 9
-
-void setup() {
-  Serial.begin(9600);  // Initialize serial communication at 9600 bits per second
-  servo.attach(servoPin);  // Attach the servo to the servoPin
-}
-
-void loop() {
-  if (Serial.available() > 0) {
-    String jsonData = Serial.readStringUntil('\n');  // Read the incoming data until newline
-    int angle = parseJson(jsonData);  // Parse the angle from the JSON data
-    if (angle >= 0 && angle <= 180) {
-      servo.write(angle);  // Move the servo to the specified angle
-      sendJsonResponse(angle);  // Send back a JSON response
-    }
-  }
-}
-
-int parseJson(String jsonData) {
-  // Simple parsing: Assumes the format {"angle":90}
-  int startPos = jsonData.indexOf(":") + 1;
-  int endPos = jsonData.indexOf("}");
-  String angleStr = jsonData.substring(startPos, endPos);
-  return angleStr.toInt();  // Convert angle to integer
-}
-
-void sendJsonResponse(int angle) {
-  String jsonResponse = "{\"status\":\"OK\",\"angle\":";
-  int angleFound = servo.read();
-  jsonResponse += angleFound;
-  jsonResponse += "}";
-  Serial.println(jsonResponse); 
-  Serial.write(angle); // Send the JSON response
-}
-*/

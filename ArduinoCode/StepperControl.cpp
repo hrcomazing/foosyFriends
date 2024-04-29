@@ -90,3 +90,10 @@ void StepperControl::stepToTarget() {
 int StepperControl::getCurrentPosition() {
     return _currentPosition;
 }
+
+float StepperControl::getCurrentPosNorm() {
+    if (_highLim == _lowLim) {  // To prevent division by zero
+        return .5;  // or consider returning an error or default value
+    }
+    return float(_currentPosition - _lowLim) / float(_highLim - _lowLim);
+}

@@ -14,6 +14,9 @@ class StepperControl {
     void setLowLim(int lim);
     void setHighLim(int lim);
     int getCurrentPosition();
+    float getCurrentPosNorm();
+    int _lowLim;
+    int _highLim;
 
   private:
     enum MotorState {IDLE, MOVING, RUNNING}; // State of the motor
@@ -22,8 +25,6 @@ class StepperControl {
     int _stepPin, _dirPin;
     int _stepsPerRevolution;
     int _currentPosition, _targetPosition;
-    int _lowLim;
-    int _highLim;
     unsigned long _lastStepTime;
     float _stepDelay;
     int _runDirection; // Added to control the direction in RUNNING state
