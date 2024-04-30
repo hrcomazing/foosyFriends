@@ -1,23 +1,23 @@
 #include <Servo.h>
 #include "StepperControl.h"
-#include "MotorServoController.h"
+#include "ArduinoController.h"
 #include <ArduinoJson.h>
 #include <string.h>  // For memcpy
 
 //Set up Serialization
-MotorServoController coms;
+ArduinoController coms;
 
 // Constants for the number of motors and servos
 static const int numMotors = 4;
 static const int numServos = 4;
 
 // Arrays to store the positions of motors and servos
-int motorDesired[numMotors];
-int servoDesired[numServos];
+int motorDesired[numMotors] = {0.5,0.5,0.5,0.5};
+int servoDesired[numServos] = {0,0,0,0};
 
 // Arrays to simulate current positions of motors and servos
-int motorCurrent[numMotors];
-int servoCurrent[numServos];
+int motorCurrent[numMotors] = {0,0,0,0};
+int servoCurrent[numServos] = {0,0,0,0};
 
 // Motor 4 pin definitions
 const int stepPin1 = 2;
@@ -52,9 +52,7 @@ StepperControl stepper2(stepPin3, dirPin3, stepsPerRevolution);
 StepperControl stepper1(stepPin4, dirPin4, stepsPerRevolution);
 
 void setup() {
-  Serial.begin(115200);
-  while (!Serial); // Wait for serial port to connect. Needed for native USB.
-  Serial.println("Ready");
+  coms.setup();
 
   pinMode(limitSwitchLow1, INPUT_PULLUP);
   pinMode(limitSwitchHigh1, INPUT_PULLUP);
@@ -77,14 +75,7 @@ void loop() {
   // received from the Serial Monitor or another input method.
 
   if (Serial.available() > 0) {
-    // Read incoming serial data (aka parse desired motor/ servo values)
-    String jsonData = Serial.readStringUntil('\n');
-    coms.parseJson(jsonData);
-    //copy desired values into local array
-    memcpy(motorDesired, coms.motorAnglesDesired, sizeof(coms.motorAnglesDesired));
-    memcpy(servoDesired, coms.servoAnglesDesired, sizeof(coms.servoAnglesDesired));
-
-
+    
     //update current servo and motor values
     motorCurrent[0] = stepper1.getCurrentPosNorm();
     motorCurrent[1] = stepper2.getCurrentPosNorm();
@@ -95,16 +86,16 @@ void loop() {
     servoCurrent[2] = 1;
     servoCurrent[3] = 1;
 
-    // Send back the data
-    coms.sendJsonResponse(servoCurrent, motorCurrent);
+    coms.loop(motorCurrent, servoCurrent);
+
 
   }
 
   //use the updated desired vals and move motor there
-  stepper1.moveTo(motorDesired[0], .3);
-  stepper2.moveTo(motorDesired[1], .3);
-  stepper3.moveTo(motorDesired[2], .3);
-  stepper4.moveTo(motorDesired[3], .3);
+  stepper1.moveTo(coms.motorPositions[0], .3);
+  stepper2.moveTo(coms.motorPositions[1], .3);
+  stepper3.moveTo(coms.motorPositions[2], .3);
+  stepper4.moveTo(coms.motorPositions[3], .3);
   stepper1.update();
   stepper2.update();
   stepper3.update();
@@ -113,7 +104,7 @@ void loop() {
 }
 
 void findLimits(StepperControl &stepper, int lowSwitch, int highSwitch) {
-  Serial.println("Finding low limit...");
+  //Serial.println("Finding low limit...");
   while (digitalRead(lowSwitch) == HIGH) {
     stepper.runAtSpeed(0.2, -1);
     stepper.update();
@@ -122,7 +113,7 @@ void findLimits(StepperControl &stepper, int lowSwitch, int highSwitch) {
   stepper.stop();
   stepper.setLowLim(stepper.getCurrentPosition());
 
-  Serial.println("Finding high limit...");
+  //Serial.println("Finding high limit...");
   while (digitalRead(highSwitch) == HIGH) {
     stepper.runAtSpeed(0.1, 1);
     stepper.update();
@@ -131,5 +122,5 @@ void findLimits(StepperControl &stepper, int lowSwitch, int highSwitch) {
   stepper.stop();
   stepper.setHighLim(stepper.getCurrentPosition());
 
-  Serial.println("Limits set.");
+  //Serial.println("Limits set.");
 }

@@ -179,12 +179,7 @@ while True:
         arduino.send_positions(motorDesired, servoDesired)
 
         # Receiving and printing current positions from the Arduino
-        current_positions = arduino.receive_positions()
-        if current_positions is not None:
-            motorCurrent = arduino.motorCurrent  # Example motor positions
-            servoCurrent = arduino.servoCurrent  # Example servo positions
-            print("Current Motor Positions:", motorCurrent)
-            print("Current Servo Positions:", servoCurrent)
+        motorCurrent, servoCurrent = arduino.receive_positions()
 
     except Exception as e:
         print("An error occurred:", e)
