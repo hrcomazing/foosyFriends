@@ -12,12 +12,12 @@ static const int numMotors = 4;
 static const int numServos = 4;
 
 // Arrays to store the positions of motors and servos
-int motorDesired[numMotors] = {0.5,0.5,0.5,0.5};
-int servoDesired[numServos] = {0,0,0,0};
+float motorDesired[numMotors] = {0.5,0.5,0.5,0.5};
+float servoDesired[numServos] = {0,0,0,0};
 
 // Arrays to simulate current positions of motors and servos
-int motorCurrent[numMotors] = {0,0,0,0};
-int servoCurrent[numServos] = {0,0,0,0};
+float motorCurrent[numMotors] = {0,0,0,0};
+float servoCurrent[numServos] = {0,0,0,0};
 
 // Motor 4 pin definitions
 const int stepPin1 = 2;
@@ -81,16 +81,23 @@ void loop() {
     motorCurrent[1] = stepper2.getCurrentPosNorm();
     motorCurrent[2] = stepper3.getCurrentPosNorm();
     motorCurrent[3] = stepper4.getCurrentPosNorm();
-    servoCurrent[0] = 1;
-    servoCurrent[1] = 1;
-    servoCurrent[2] = 1;
-    servoCurrent[3] = 1;
+    servoCurrent[0] = 0;
+    servoCurrent[1] = 0;
+    servoCurrent[2] = 0;
+    servoCurrent[3] = 0;
 
     coms.loop(motorCurrent, servoCurrent);
-
+    //Serial.print("rishi is sexy");
 
   }
-
+  /*Serial.print(F("got here bitch"));
+  Serial.print(coms.motorPositions[0]);
+  Serial.print(", ");
+  Serial.print(coms.motorPositions[1]);
+  Serial.print(", ");
+  Serial.print(coms.motorPositions[2]);
+  Serial.print(", ");
+  Serial.println(coms.motorPositions[3]);*/
   //use the updated desired vals and move motor there
   stepper1.moveTo(coms.motorPositions[0], .3);
   stepper2.moveTo(coms.motorPositions[1], .3);
@@ -106,7 +113,7 @@ void loop() {
 void findLimits(StepperControl &stepper, int lowSwitch, int highSwitch) {
   //Serial.println("Finding low limit...");
   while (digitalRead(lowSwitch) == HIGH) {
-    stepper.runAtSpeed(0.2, -1);
+    stepper.runAtSpeed(0.5, -1);
     stepper.update();
     delay(5); // Short delay to slow down the search
   }
@@ -115,7 +122,7 @@ void findLimits(StepperControl &stepper, int lowSwitch, int highSwitch) {
 
   //Serial.println("Finding high limit...");
   while (digitalRead(highSwitch) == HIGH) {
-    stepper.runAtSpeed(0.1, 1);
+    stepper.runAtSpeed(0.5, 1);
     stepper.update();
     delay(5); // Short delay to slow down the search
   }
