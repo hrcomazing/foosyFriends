@@ -25,9 +25,9 @@ v_stepper = 10
 
 # Pixel coordinates of the table corners
 ULCorner = (0, 0)  # Upper Left (194,134)
-URCorner = (0, 840)  # Upper Right (1061, 136)
-BLCorner = (470, 0)  # Bottom Left (200, 626)
-BRCorner = (470, 840)  # Bottom Right (1066, 609)
+URCorner = (840, 0)  # Upper Right (1061, 136)
+BLCorner = (0, 470)  # Bottom Left (200, 626)
+BRCorner = (840, 470)  # Bottom Right (1066, 609)
 
 
 # helper methods
@@ -105,7 +105,7 @@ print("Player Areas per Rod in Pixels:", player_areas_per_rod_pixels)
 print("Rod X-Asymptotes in Pixels:", rod_x_asymptote_pixels)
 
 # Setup camera
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(1,cv2.CAP_DSHOW)
 if not cap.isOpened():
     print("Error: Could not open video capture device.")
     exit()
@@ -127,7 +127,7 @@ lower_orange = np.array([0, 100, 100])
 upper_orange = np.array([100, 255, 255])
 
 # init communications change port as necessary
-arduino = ArduinoCOM(port='/dev/cu.usbmodem144301')  # Replace 'COM3' with your actual COM port
+arduino = ArduinoCOM(port='COM3')  # Replace 'COM3' with your actual COM port
 
 # init dummy values for coms arrays
 motorCurrent = [0, 0, 0, 0]
@@ -159,14 +159,14 @@ while True:
     contours = imutils.grab_contours(contours)
     if len(contours) > 0:
         c = max(contours, key=cv2.contourArea)
-        if cv2.contourArea(c) > 100 and cv2.contourArea(c) > 500:  # Update this threshold as needed
+        if cv2.contourArea(c) > 50 and cv2.contourArea(c) > 500:  # Update this threshold as needed
             ((x, y), _) = cv2.minEnclosingCircle(c)
 
     cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
     cv2.imshow('Frame', frame)
 
     # set the values of x,y from vision to x2, y2 for prediction
-    x2, y2 = y, x  # Random values for testing
+    x2, y2 = x, y  # Random values for testing
     x_coords.append(x2)
     y_coords.append(y2)
     timestamps.append(current_time)
@@ -179,7 +179,7 @@ while True:
                                                           time_diff)
 
         for rod_index, x_rod in enumerate(rod_x_asymptote_pixels):
-            time_to_intercept = np.abs((x_rod - x2) / vx) if vx != 0 else float('inf')
+            time_to_intercept = np.abs((x_rod - y2) / vx) if vx != 0 else float('inf')
             for player_index, (start, end) in enumerate(player_areas_per_rod_pixels[rod_index]):
                 if start <= y_final[rod_index] <= end:
                     motor_travel_time = np.abs(
@@ -189,7 +189,7 @@ while True:
                         hitInches = (end - start)*stepper_position + start
                         print(
                             f"Rod {rod_index + 1} Player {player_index + 1}: Move motor to position {stepper_position:.2f} to intercept")
-                        motorDesired[rod_index] = stepper_position  # update desired motor position array
+                        motorDesired[rod_index] = 1-stepper_position  # update desired motor position array
                         playerHitting[rod_index] = player_index
                     else:
                         print(
@@ -218,5 +218,3 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-
-
