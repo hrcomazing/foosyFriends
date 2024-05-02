@@ -25,9 +25,9 @@ v_stepper = 10
 
 # Pixel coordinates of the table corners
 ULCorner = (0, 0)  # Upper Left (194,134)
-URCorner = (840, 0)  # Upper Right (1061, 136)
-BLCorner = (0, 470)  # Bottom Left (200, 626)
-BRCorner = (840, 470)  # Bottom Right (1066, 609)
+URCorner = (0, 840)  # Upper Right (1061, 136)
+BLCorner = (470, 0)  # Bottom Left (200, 626)
+BRCorner = (470, 840)  # Bottom Right (1066, 609)
 
 
 # helper methods
@@ -89,12 +89,17 @@ player_areas_per_rod_inches = [
 rod_x_asymptote_inches = [32.125, 20.5, 8.875, 3]
 
 # Convert to pixels
-player_areas_per_rod_pixels = [convert_to_pixels(areas, ppi_length) for areas in player_areas_per_rod_inches]
+player_areas_per_rod_pixels = [
+    [(19.5, 165), (165, 310.5), (305, 450.5)],
+    [(10, 85.5), (107, 182.5), (201, 276.5), (295, 370.5), (390, 465)],
+    [(12, 265), (207, 460)],
+    [(12, 178), (205.5, 371.5), (347, 513)]
+]
 rod_x_asymptote_pixels = convert_rod_asymptotes(rod_x_asymptote_inches, ppi_width)
-rod_x_asymptote_pixels[0] = 610
-rod_x_asymptote_pixels[3] = 50
-rod_x_asymptote_pixels[2] = 170
-rod_x_asymptote_pixels[1] = 350
+rod_x_asymptote_pixels[0] = 595
+rod_x_asymptote_pixels[3] = 36
+rod_x_asymptote_pixels[2] = 147
+rod_x_asymptote_pixels[1] = 373
 
 print("Player Areas per Rod in Pixels:", player_areas_per_rod_pixels)
 print("Rod X-Asymptotes in Pixels:", rod_x_asymptote_pixels)
@@ -154,14 +159,14 @@ while True:
     contours = imutils.grab_contours(contours)
     if len(contours) > 0:
         c = max(contours, key=cv2.contourArea)
-        if cv2.contourArea(c) > 100:  # Update this threshold as needed
+        if cv2.contourArea(c) > 100 && cv2.contourArea(c) > 500:  # Update this threshold as needed
             ((x, y), _) = cv2.minEnclosingCircle(c)
 
     cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
     cv2.imshow('Frame', frame)
 
     # set the values of x,y from vision to x2, y2 for prediction
-    x2, y2 = x, y  # Random values for testing
+    x2, y2 = y, x  # Random values for testing
     x_coords.append(x2)
     y_coords.append(y2)
     timestamps.append(current_time)

@@ -13,6 +13,10 @@ StepperControl::StepperControl(int stepPin, int dirPin, int stepsPerRevolution) 
     _lowLim = 0;
     _state = IDLE; // Motor starts in an idle state
     _runDirection = 1; // Default direction
+    _initialStepDelay = 2000; // Initial step delay for smooth start
+    _minStepDelay = 200; // Minimum step delay at full speed
+    _maxStepDelay = 2000; // Maximum step delay for slowest speed or start/stop
+    _acceleration = 100; // Number of steps to reach full speed
 }
 
 void StepperControl::setLowLim(int lim){
@@ -24,14 +28,16 @@ void StepperControl::setHighLim(int lim){
 }
 
 void StepperControl::moveTo(float position, float speed) {
-    _targetPosition = (int)(_lowLim + position*(_highLim - _lowLim));
-    _stepDelay = 2000 * (1 - speed);
+    _targetPosition = (int)(_lowLim + position * (_highLim - _lowLim));
+    _stepDelay = _maxStepDelay;
+    _speedIncrement = (_maxStepDelay - _minStepDelay) / _acceleration;
     _state = MOVING;
 }
 
 void StepperControl::runAtSpeed(float speed, int direction) {
-    _stepDelay = 2000 * (1 - speed);
-    _runDirection = direction >= 0 ? 1 : -1; // Determine direction based on input
+    _stepDelay = _maxStepDelay;
+    _speedIncrement = (_maxStepDelay - _minStepDelay) / _acceleration;
+    _runDirection = direction >= 0 ? 1 : -1;
     _state = RUNNING;
 }
 
@@ -67,6 +73,7 @@ void StepperControl::stepMotor(int step) {
 void StepperControl::runContinuous() {
     unsigned long currentTime = micros();
     if (currentTime - _lastStepTime >= _stepDelay) {
+        if (_stepDelay > _minStepDelay) _stepDelay -= _speedIncrement;
         stepMotor(_runDirection);
         _currentPosition += _runDirection;
         _lastStepTime = currentTime;
@@ -76,14 +83,22 @@ void StepperControl::runContinuous() {
 void StepperControl::stepToTarget() {
     unsigned long currentTime = micros();
     if (currentTime - _lastStepTime >= _stepDelay) {
+        int stepsToGo = abs(_targetPosition - _currentPosition);
+        if (stepsToGo < _acceleration) {
+            _stepDelay += _speedIncrement; // Decelerate
+        } else if (_stepDelay > _minStepDelay) {
+            _stepDelay -= _speedIncrement; // Accelerate
+        }
+
         if (_currentPosition < _targetPosition) {
             stepMotor(1);
             _currentPosition++;
-        } else {
+        } else if (_currentPosition > _targetPosition) {
             stepMotor(-1);
             _currentPosition--;
         }
         _lastStepTime = currentTime;
+        if (stepsToGo == 0) _state = IDLE; // Stop when target is reached
     }
 }
 
