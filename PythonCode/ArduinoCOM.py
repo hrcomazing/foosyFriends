@@ -24,7 +24,7 @@ class ArduinoCOM:
         if self.ser.inWaiting() > 0:
             response = self.ser.readline().decode().rstrip()
             print(f"Received current positions from Arduino: {response}")
-            positions = list(map(double, response.split(',')))
+            positions = list(map(float, response.split(',')))
             #print(positions)
             self.motorCurrent = positions[:len(positions)//2]  # Assuming first half are motor positions
             self.servoCurrent = positions[len(positions)//2:]  # Assuming second half are servo positions

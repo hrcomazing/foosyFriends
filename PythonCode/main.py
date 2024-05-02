@@ -24,10 +24,10 @@ length_inches = 46.75
 v_stepper = 10
 
 # Pixel coordinates of the table corners
-ULCorner = (197, 135)  # Upper Left (194,134)
-URCorner = (1064, 135)  # Upper Right (1061, 136)
-BLCorner = (197, 617)  # Bottom Left (200, 626)
-BRCorner = (1064, 617)  # Bottom Right (1066, 609)
+ULCorner = (0, 0)  # Upper Left (194,134)
+URCorner = (840, 0)  # Upper Right (1061, 136)
+BLCorner = (0, 470)  # Bottom Left (200, 626)
+BRCorner = (840, 470)  # Bottom Right (1066, 609)
 
 
 # helper methods
@@ -64,6 +64,12 @@ def predict_final_position(x1, y1, x2, y2, time_diff):
 
     return x_final, y_final, vx, vy
 
+def closeEnough(array1, val2, tol):
+    # Convert inputs to numpy arrays
+    val1 = np.array(array1)
+    # Compute the absolute difference and check against the tolerance
+    return abs(val1 - val2) < tol
+
 
 # Calculate pixel-per-inch ratio
 width_pixels = URCorner[0] - ULCorner[0]  # stupid axis
@@ -85,6 +91,10 @@ rod_x_asymptote_inches = [32.125, 20.5, 8.875, 3]
 # Convert to pixels
 player_areas_per_rod_pixels = [convert_to_pixels(areas, ppi_length) for areas in player_areas_per_rod_inches]
 rod_x_asymptote_pixels = convert_rod_asymptotes(rod_x_asymptote_inches, ppi_width)
+rod_x_asymptote_pixels[0] = 610
+rod_x_asymptote_pixels[3] = 50
+rod_x_asymptote_pixels[2] = 170
+rod_x_asymptote_pixels[1] = 350
 
 print("Player Areas per Rod in Pixels:", player_areas_per_rod_pixels)
 print("Rod X-Asymptotes in Pixels:", rod_x_asymptote_pixels)
@@ -115,10 +125,11 @@ upper_orange = np.array([100, 255, 255])
 arduino = ArduinoCOM(port='/dev/cu.usbmodem144301')  # Replace 'COM3' with your actual COM port
 
 # init dummy values for coms arrays
-motorCurrent = [0.5, 0.5, 0.5, 0.5]
+motorCurrent = [0, 0, 0, 0]
 motorDesired = [0.5, 0.5, 0.5, 0.5]
-servoCurrent = [20, 20, 20, 69]
-servoDesired = [0.5, 0.5, 0.5, 0.5]
+servoCurrent = [0, 0, 0, 0]
+servoDesired = [0, 0, 0, 0]
+playerHitting = [-1, -1, -1, -1]
 
 # Main loop
 while True:
@@ -130,6 +141,7 @@ while True:
         break
     frame = imutils.resize(frame, width=1200)
     frame = AntiFisheye.undistort_fisheye_image(frame, K, D)
+    frame = frame[120:590, 160:1000]
     fgmask = fgbg.apply(frame)
     # Convert the frame to HSV color space
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -169,12 +181,21 @@ while True:
                         (normalize_y_position(y_final[rod_index]) - motorCurrent[rod_index]) / v_stepper)
                     if motor_travel_time <= time_to_intercept:
                         stepper_position = (y_final[rod_index] - start) / (end - start)
+                        hitInches = (end - start)*stepper_position + start
                         print(
                             f"Rod {rod_index + 1} Player {player_index + 1}: Move motor to position {stepper_position:.2f} to intercept")
                         motorDesired[rod_index] = stepper_position  # update desired motor position array
+                        playerHitting[rod_index] = player_index
                     else:
                         print(
                             f"Rod {rod_index + 1}: Cannot intercept in time, requires {motor_travel_time:.2f}s, available {time_to_intercept:.2f}s")
+                        playerHitting[rod_index] = -1
+        # servo stuff
+        #print(rod_x_asymptote_pixels) #200, vvv, fff, 750
+        print(x2)
+        servoDesired = closeEnough(rod_x_asymptote_pixels, x2, 80)
+        servoDesired = [float(value) for value in servoDesired]
+        print(servoDesired)
 
     # send and receive coordinates via serial
     try:

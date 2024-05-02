@@ -18,7 +18,7 @@ void ArduinoController::loop(float newMotorPos[], float newServoPos[]) {
         String data = Serial.readStringUntil('\n');
         parseData(data);
         updateCurrentMSVals(newMotorPos, newServoPos);
-        sendDataBack(motorPosCurr, servoPosCurr);
+        sendDataBack(newMotorPos, newServoPos);
     }
 }
 

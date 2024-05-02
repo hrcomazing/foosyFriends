@@ -4,8 +4,8 @@ import imutils
 import math
 from AntiFisheye import AntiFisheye
 
-K = np.array([[1.45380566e+03, 0.00000000e+00, 9.44220226e+02], [0.00000000e+00, 1.45638184e+03, 5.78271220e+02], [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])  # Example camera matrix
-D = np.array([-0.04329432, -0.03965177, 0.1452752, -0.13559069])
+K = np.array([[968.82202387, 0.00000000e+00, 628.92706997], [0.00000000e+00, 970.56156502, 385.82007021], [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])  # Example camera matrix
+D = np.array([-0.04508764, -0.01990902, 0.08263842, -0.0700435])
 radius = 10
 
 def track_colored_object():
@@ -36,6 +36,7 @@ def track_colored_object():
         frame = imutils.resize(frame, width=1200)
         # Apply the background subtractor to get the foreground mask
         frame = AntiFisheye.undistort_fisheye_image(frame, K, D)
+        frame = frame[120:590, 160:1000]
         fgmask = fgbg.apply(frame)
 
         # Convert the frame to HSV color space
@@ -54,7 +55,7 @@ def track_colored_object():
         if len(contours) > 0:
             c = max(contours, key=cv2.contourArea)
             if cv2.contourArea(c) > 100:  # Update this threshold as needed
-                ((x, y), radius) = cv2.minEnclosingCircle(c)
+                ((x, y), _) = cv2.minEnclosingCircle(c)
                 print(f"Updated position: ({x}, {y})")
             else:
                 print(f"Current position: ({x}, {y})")

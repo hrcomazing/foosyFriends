@@ -13,11 +13,31 @@ static const int numServos = 4;
 
 // Arrays to store the positions of motors and servos
 float motorDesired[numMotors] = {0.5,0.5,0.5,0.5};
-float servoDesired[numServos] = {0,0,0,0};
+float servoDesired[numServos] = {0.0,0.0,0.0,0.0};
 
 // Arrays to simulate current positions of motors and servos
-float motorCurrent[numMotors] = {0,0,0,0};
-float servoCurrent[numServos] = {0,0,0,0};
+float motorCurrent[numMotors] = {0.0,0.0,0.0,0.0};
+float servoCurrent[numServos] = {0.0,0.0,0.0,0.0};
+
+
+Servo servo1, servo2, servo3, servo4; // Declare servo objects
+//float servoFlags[4] = {1.0, 1.0, 1.0, 1.0}; // Array to hold flags for each servo (0.0 for false, 1.0 for true)
+unsigned long previousMillis[4] = {0, 0, 0, 0}; // Stores the last time each servo was updated
+long interval = 100; // Interval at which to move servo (milliseconds)
+int currentStep[4] = {0, 0, 0, 0}; // To track the sequence of movements for each servo
+
+
+//servo 1
+int servop4 = 10;
+
+//servo 2
+int servop3 = 11;
+
+//servo 3
+int servop2 = 12;
+
+//servo 4
+int servop1 = 13;
 
 // Motor 4 pin definitions
 const int stepPin1 = 2;
@@ -54,6 +74,11 @@ StepperControl stepper1(stepPin4, dirPin4, stepsPerRevolution);
 void setup() {
   coms.setup();
 
+  servo1.attach(servop1); // Attach each servo to a different pin
+  servo2.attach(servop2);
+  servo3.attach(servop3);
+  servo4.attach(servop4);
+
   pinMode(limitSwitchLow1, INPUT_PULLUP);
   pinMode(limitSwitchHigh1, INPUT_PULLUP);
   pinMode(limitSwitchLow2, INPUT_PULLUP);
@@ -81,23 +106,16 @@ void loop() {
     motorCurrent[1] = stepper2.getCurrentPosNorm();
     motorCurrent[2] = stepper3.getCurrentPosNorm();
     motorCurrent[3] = stepper4.getCurrentPosNorm();
-    servoCurrent[0] = 0;
-    servoCurrent[1] = 0;
-    servoCurrent[2] = 0;
-    servoCurrent[3] = 0;
 
     coms.loop(motorCurrent, servoCurrent);
-    //Serial.print("rishi is sexy");
+
+    servoCurrent[0] = servoCurrent[0] + coms.servoPositions[0];
+    servoCurrent[1] = servoCurrent[1] + coms.servoPositions[1];
+    servoCurrent[2] = servoCurrent[2] + coms.servoPositions[2];
+    servoCurrent[3] = servoCurrent[3] + coms.servoPositions[3];
 
   }
-  /*Serial.print(F("got here bitch"));
-  Serial.print(coms.motorPositions[0]);
-  Serial.print(", ");
-  Serial.print(coms.motorPositions[1]);
-  Serial.print(", ");
-  Serial.print(coms.motorPositions[2]);
-  Serial.print(", ");
-  Serial.println(coms.motorPositions[3]);*/
+
   //use the updated desired vals and move motor there
   stepper1.moveTo(coms.motorPositions[0], .3);
   stepper2.moveTo(coms.motorPositions[1], .3);
@@ -107,6 +125,31 @@ void loop() {
   stepper2.update();
   stepper3.update();
   stepper4.update();
+
+  unsigned long currentMillis = millis();
+
+  for (int i = 0; i < 4; i++) {
+    if (servoCurrent[i] != 0.0 && currentMillis - previousMillis[i] >= interval) {
+      previousMillis[i] = currentMillis; // Update last move time for this servo
+      
+      switch (currentStep[i]) {
+        case 0:
+          moveServo(i, 90); // Initial vertical position
+          interval = 215;
+          break;
+        case 1:
+          moveServo(i, 135); // Slightly back
+          interval = 115;
+          break;
+        case 2:
+          moveServo(i, 90); // Return to initial vertical position
+          currentStep[i] = -1; // Reset step to stop movement after one cycle
+          servoCurrent[i] = 0.0; // Set the flag to 0.0 to indicate that the kick has occurred
+          break;
+      }
+      currentStep[i]++;
+    }
+  }
 
 }
 
@@ -130,4 +173,21 @@ void findLimits(StepperControl &stepper, int lowSwitch, int highSwitch) {
   stepper.setHighLim(stepper.getCurrentPosition());
 
   //Serial.println("Limits set.");
+}
+
+void moveServo(int servoIndex, int angle) {
+  switch (servoIndex) {
+    case 0:
+      servo1.write(angle);
+      break;
+    case 1:
+      servo2.write(angle);
+      break;
+    case 2:
+      servo3.write(angle);
+      break;
+    case 3:
+      servo4.write(angle);
+      break;
+  }
 }
