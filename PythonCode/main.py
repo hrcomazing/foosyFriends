@@ -159,7 +159,7 @@ while True:
     contours = imutils.grab_contours(contours)
     if len(contours) > 0:
         c = max(contours, key=cv2.contourArea)
-        if cv2.contourArea(c) > 100 && cv2.contourArea(c) > 500:  # Update this threshold as needed
+        if cv2.contourArea(c) > 100 and cv2.contourArea(c) > 500:  # Update this threshold as needed
             ((x, y), _) = cv2.minEnclosingCircle(c)
 
     cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
