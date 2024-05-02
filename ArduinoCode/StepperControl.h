@@ -6,11 +6,13 @@
 class StepperControl {
 public:
     StepperControl(int stepPin, int dirPin, int stepsPerRevolution);
+
     void setLowLim(int lim);
     void setHighLim(int lim);
     void moveTo(float position, float speed);
     void runAtSpeed(float speed, int direction);
     void stop();
+    void setIdle();
     void update();
     int getCurrentPosition();
     float getCurrentPosNorm();
@@ -25,10 +27,13 @@ private:
     int _highLim;               // Upper limit of the stepper's range
     int _lowLim;                // Lower limit of the stepper's range
     float _stepDelay;           // Delay between steps in microseconds
-    float _maxSpeed;            // Maximum speed in steps per millisecond
-    float _speed;               // Current speed in steps per millisecond
-    float _acceleration;        // Acceleration in steps per millisecond squared
+    float _speedIncrement;      // Amount to increment speed during acceleration/deceleration
     int _runDirection;          // Direction of run, 1 for forward, -1 for backward
+    int _acceleration;          // Number of steps to reach full speed
+    int _initialStepDelay;      // Initial delay for stepping for a smooth start
+    int _minStepDelay;          // Minimum delay at full speed
+    int _maxStepDelay;          // Maximum delay for slowest speed or start/stop
+
     enum MotorState { IDLE, MOVING, RUNNING }; // States of the stepper motor
     MotorState _state;          // Current state of the motor
 
